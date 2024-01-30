@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import math
 
 
@@ -100,3 +101,14 @@ def get_data_points(distribution, distribution_size, outliers, outliers_rate):
     outlier_amount = get_outlier_amount(distribution_size, outliers_rate)
     new_outliers = outliers.sample(frac=outlier_amount / len(outliers)).__array__()
     return np.concatenate([new_distribution, new_outliers])
+
+def get_full_distribution(distribution, n_distribution: int, outliers: str, outliers_rate: float) -> pd.DataFrame:
+    distribution_df = pd.DataFrame()
+    distribution_df["Distribution"] = distribution.sample(frac=n_distribution/len(distribution))
+    distribution_df["Type"] = "Valid data points"
+
+    outliers_df = pd.DataFrame()
+    outlier_amount = get_outlier_amount(n_distribution, outliers_rate)
+    outliers_df["Distribution"] = outliers.sample(frac=outlier_amount/len(outliers))
+    outliers_df["Type"] = "Outliers"
+    return pd.concat([distribution_df, outliers_df])
