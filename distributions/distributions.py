@@ -64,7 +64,7 @@ Distribution manipulation
 """
 
 
-def threshold(data, weight_mad, weight_iqr, weight_sd, const_mad, const_iqr, const_sd):
+def get_threshold(data, weight_mad, weight_iqr, weight_sd, const_mad, const_iqr, const_sd):
     """
     Calculate outlier detection thresholds using a combination of MAD, IQR, and SD.
     :param data: The input data for which outlier thresholds are calculated.
@@ -101,6 +101,7 @@ def get_data_points(distribution, distribution_size, outliers, outliers_rate):
     outlier_amount = get_outlier_amount(distribution_size, outliers_rate)
     new_outliers = outliers.sample(frac=outlier_amount / len(outliers)).__array__()
     return np.concatenate([new_distribution, new_outliers])
+
 
 def get_full_distribution(distribution, n_distribution: int, outliers: str, outliers_rate: float) -> pd.DataFrame:
     distribution_df = pd.DataFrame()
