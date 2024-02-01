@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from distributions.distributions import get_outlier_amount, get_data_points, get_threshold, get_full_distribution
@@ -11,8 +10,8 @@ def distribution_graph(distribution, w_mad, w_iqr, w_sd, const_mad, const_iqr, c
     fig, ax = plt.subplots(figsize=(7, 5))
 
     # Create a KDE plot with different colors based on the "Type" column
-    sns.kdeplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True,
-                hue_order=["Valid data points", "Outliers"], ax=ax)  # Keep common_norm True
+    g = sns.kdeplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True,
+                hue_order=["Valid data points", "Outliers"], ax=ax, )  # Keep common_norm True
 
     # Set labels and title
     plt.xlabel('Value')
@@ -24,6 +23,7 @@ def distribution_graph(distribution, w_mad, w_iqr, w_sd, const_mad, const_iqr, c
                               const_iqr, const_sd)
     ax.axvline(x=threshold[0], color='red', linestyle='--', label='Line 1')
     ax.axvline(x=threshold[1], color='red', linestyle='--', label='Line 2')
+    sns.move_legend(g, loc='upper right')
 
     st.write(fig)
 
