@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import seaborn as sns
@@ -34,8 +35,12 @@ def run_button():
 
 
 # Sample distributions and outliers
-distributions_df = pd.read_csv("src_data\distributions.csv", sep=";", decimal=".")
-outliers_df = pd.read_csv("src_data\outliers.csv", sep=";", decimal=",")
+
+file_path_distributions = os.path.join("src_data", "distributions.csv")
+file_path_outliers = os.path.join("src_data", "outliers.csv")
+
+distributions_df = pd.read_csv(file_path_distributions, sep=";", decimal=".")
+outliers_df = pd.read_csv(file_path_outliers, sep=";", decimal=",")
 
 #Define shape names for distributions and outliers
 distributions_shapes = distributions_df.columns
