@@ -3,6 +3,14 @@ import pandas as pd
 import math
 
 
+def get_mad(data):
+    median = np.nanmedian(data)
+    deviations = np.abs(data - median)
+    mad = np.nanmedian(deviations)
+    div = 1/np.nanpercentile(data, 75)
+    return mad * div
+
+
 def calculate_mad(data):
     """
     Calculate the Median Absolute Deviation (MAD) of a given distribution.
@@ -78,6 +86,7 @@ def get_threshold(data, weight_mad, weight_iqr, weight_sd, const_mad, const_iqr,
     thresh_up (float): Upper outlier detection threshold.
     """
     mad = calculate_mad(data)
+    #mad = get_mad(data)
     iqr = calculate_iqr(data)
     sd = calculate_sd(data)
     thresh_up = weight_mad * (np.nanmedian(data) + const_mad * mad) + weight_iqr * (
