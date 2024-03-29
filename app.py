@@ -52,6 +52,13 @@ def run():
     distribution_graph(user_full_distribution, user_mad_weight, user_iqr_weight, user_sd_weight, user_mad_constant,
                        user_iqr_constant, user_sd_constant)
 
+# Config
+st.set_page_config(
+    page_title="Outlier detection",
+    layout="centered",
+)
+
+
 
 # Sample distributions and outliers
 
@@ -85,16 +92,25 @@ with tab2:
 
     if user_file is not None:
         user_df = pd.read_csv(user_file, sep=separator)
-        values = st.radio("Pick the column where the values are", [column for column in user_df.columns])
+        values = st.radio("Click on the column where the values are", [column for column in user_df.columns])
 
 # User formula choice
-user_mad_weight = st.number_input(label="MAD weight (%)", min_value=0, max_value=100, step=1) / 100
-user_iqr_weight = st.number_input(label="IQR weight (%)", min_value=0, max_value=100, step=1) / 100
-user_sd_weight = st.number_input(label="SD weight (%)", min_value=0, max_value=100, step=1) / 100
+st.write("## Formula")
+st.write("Choose the parameters of the outlier detection formula")
 
-user_mad_constant = st.number_input(label="MAD constant", min_value=1.0, max_value=5.0, step=0.5)
-user_iqr_constant = st.number_input(label="IQR constant", min_value=1.0, max_value=5.0, step=0.5)
-user_sd_constant = st.number_input(label="SD constant", min_value=1.0, max_value=5.0, step=0.5)
+custom = st.checkbox("Custom")
+
+if not custom:
+    outlier_method = st.radio("Method", ['MAD', 'SD', 'IQR'])
+else:
+    user_mad_weight = st.number_input(label="MAD weight (%)", min_value=0, max_value=100, step=1) / 100
+    user_iqr_weight = st.number_input(label="IQR weight (%)", min_value=0, max_value=100, step=1) / 100
+    user_sd_weight = st.number_input(label="SD weight (%)", min_value=0, max_value=100, step=1) / 100
+
+    user_mad_constant = st.number_input(label="MAD constant", min_value=1.0, max_value=5.0, step=0.5)
+    user_iqr_constant = st.number_input(label="IQR constant", min_value=1.0, max_value=5.0, step=0.5)
+    user_sd_constant = st.number_input(label="SD constant", min_value=1.0, max_value=5.0, step=0.5)
 
 run_button = st.button("Run", on_click=run)
+
 
