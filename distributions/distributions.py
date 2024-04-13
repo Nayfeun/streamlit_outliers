@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 import math
+from distributions.models import Formula
+import streamlit as st
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def get_mad(data):
@@ -122,3 +126,60 @@ def get_full_distribution(distribution, n_distribution: int, outliers: str, outl
     outliers_df["Distribution"] = outliers.sample(frac=outlier_amount/len(outliers))
     outliers_df["Type"] = "Outliers"
     return pd.concat([distribution_df, outliers_df])
+
+
+def formula_choice() -> Formula:
+    # User formula selection
+    st.write("### Formula")
+    st.write("Choose the parameters of the outlier detection formula")
+    custom = st.checkbox("Custom")
+    user_formula = Formula()
+
+    if not custom:
+        outlier_method = st.radio("Method", ['2.5 MAD', '1.5 IQR', '2.5 SD', '3.0 SD'])
+        if outlier_method.endswith('SD'):
+            user_formula.sd_weight = 1
+            user_formula.sd_constant = float(outlier_method[:3])
+        elif outlier_method.endswith('MAD'):
+            user_formula.mad_weight = 1
+            user_formula.mad_constant = float(outlier_method[:3])
+        else:
+            user_formula.iqr_weight = 1
+            user_formula.iqr_constant = 1.5
+
+    else:
+        user_formula.mad_weight, user_formula.iqr_weight, user_formula.sd_weight = [
+            st.number_input(label=f'{method} weight (%)', min_value=0, max_value=100, step=1) / 100 for method in
+            Formula.METHODS]
+
+        user_formula.mad_constant, user_formula.iqr_constant, user_formula.sd_constant = [
+            st.number_input(label=f'{method} constant', min_value=1.0, max_value=5.0, step=0.5) for method in
+            Formula.METHODS]
+
+    return user_formula
+
+
+def distribution_graph(distribution, formula: Formula):
+    # Set the background color and create a kernel density estimate plot without bars
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    # Create a KDE plot with different colors based on the "Type" column
+    try:
+        g = sns.kdeplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True, ax=ax, )
+        # Set labels and title
+        plt.xlabel('Value')
+        plt.ylabel('Density')
+
+        # Add vertical lines for threshold
+        distribution_ndarray = distribution['Distribution'].__array__()
+        threshold = get_threshold(distribution_ndarray, formula.mad_weight, formula.iqr_weight, formula.sd_weight,
+                                  formula.mad_constant,
+                                  formula.iqr_constant, formula.sd_constant)
+        ax.axvline(x=threshold[0], color='red', linestyle='--', label='Line 1')
+        ax.axvline(x=threshold[1], color='red', linestyle='--', label='Line 2')
+        sns.move_legend(g, loc='upper right')
+
+        st.write(fig)
+    except TypeError:
+        st.error('The chosen column is not numeric. Please choose another column.')
+
