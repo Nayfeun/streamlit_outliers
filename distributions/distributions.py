@@ -4,7 +4,10 @@ import math
 from distributions.models import Formula
 import streamlit as st
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import seaborn as sns
+import matplotlib.patches as mpatches
+
 
 
 def get_mad(data):
@@ -159,13 +162,18 @@ def formula_choice() -> Formula:
     return user_formula
 
 
-def distribution_graph(distribution, formula: Formula):
+def distribution_graph(container: st.container, distribution: pd.DataFrame, formula: Formula, kind='KDE'):
+    sns.set_theme()
     # Set the background color and create a kernel density estimate plot without bars
     fig, ax = plt.subplots(figsize=(7, 5))
 
     # Create a KDE plot with different colors based on the "Type" column
     try:
-        g = sns.kdeplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True, ax=ax, )
+        if kind.startswith('KDE'):
+            ax = sns.kdeplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True, legend=True)
+        else:
+            ax = sns.histplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True, legend=True)
+
         # Set labels and title
         plt.xlabel('Value')
         plt.ylabel('Density')
@@ -175,11 +183,13 @@ def distribution_graph(distribution, formula: Formula):
         threshold = get_threshold(distribution_ndarray, formula.mad_weight, formula.iqr_weight, formula.sd_weight,
                                   formula.mad_constant,
                                   formula.iqr_constant, formula.sd_constant)
-        ax.axvline(x=threshold[0], color='red', linestyle='--', label='Line 1')
-        ax.axvline(x=threshold[1], color='red', linestyle='--', label='Line 2')
-        sns.move_legend(g, loc='upper right')
+        ax.axvline(x=threshold[0], color='red', linestyle='--')
+        ax.axvline(x=threshold[1], color='red', linestyle='--')
+        sns.move_legend(ax, loc='upper right')
 
-        st.write(fig)
+        with container:
+            st.pyplot(fig)
     except TypeError:
         st.error('The chosen column is not numeric. Please choose another column.')
+
 

@@ -20,10 +20,10 @@ class Distribution(BaseModel):
                                       'outlier_2_side_centered_extreme', 'outlier_2_side_centered_close',
                                       'outlier_2_side_dispersed_extreme', 'outlier_2_side_dispersed_close']
     data: pd.DataFrame = Field(default=None)
-    distribution_shape: str = Field(default='normal')
-    distribution_size: int = Field(default=1)
-    outliers_shape: str = Field(default='outlier_1_side_centered_extreme')
-    outliers_rate: float = Field(default=1.0)
+    distribution_shape: str = Field(default=None)
+    distribution_size: int = Field(default=None)
+    outliers_shape: str = Field(default=None)
+    outliers_rate: float = Field(default=None)
 
     class Config:
         arbitrary_types_allowed = True

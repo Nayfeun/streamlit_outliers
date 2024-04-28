@@ -13,7 +13,9 @@ def get_distribution_from_df(user_df: pd.DataFrame, values_col_name: str) -> pd.
 
 def run_visualization(df: pd.DataFrame, col_name: str, formula: Formula):
     user_full_distribution = get_distribution_from_df(df, col_name)
-    distribution_graph(user_full_distribution, formula)
+    fig_container = st.container(border=True)
+    with fig_container:
+        distribution_graph(fig_container, user_full_distribution, formula)
 
 
 def main():
