@@ -133,39 +133,40 @@ def get_full_distribution(distribution, n_distribution: int, outliers: str, outl
 
 def formula_choice() -> Formula:
     # User formula selection
-    st.write("### Formula")
-    st.write("Choose the parameters of the outlier detection formula")
-    custom = st.checkbox("Custom")
-    user_formula = Formula()
+    with st.sidebar:
+        st.subheader("Choose the parameters of the outlier detection formula")
+        custom = st.checkbox("Custom")
+        user_formula = Formula()
 
-    if not custom:
-        outlier_method = st.radio("Method", ['2.5 MAD', '1.5 IQR', '2.5 SD', '3.0 SD'])
-        if outlier_method.endswith('SD'):
-            user_formula.sd_weight = 1
-            user_formula.sd_constant = float(outlier_method[:3])
-        elif outlier_method.endswith('MAD'):
-            user_formula.mad_weight = 1
-            user_formula.mad_constant = float(outlier_method[:3])
+        if not custom:
+            outlier_method = st.radio("Method", ['2.5 MAD', '1.5 IQR', '2.5 SD', '3.0 SD'])
+            if outlier_method.endswith('SD'):
+                user_formula.sd_weight = 1
+                user_formula.sd_constant = float(outlier_method[:3])
+            elif outlier_method.endswith('MAD'):
+                user_formula.mad_weight = 1
+                user_formula.mad_constant = float(outlier_method[:3])
+            else:
+                user_formula.iqr_weight = 1
+                user_formula.iqr_constant = 1.5
+
         else:
-            user_formula.iqr_weight = 1
-            user_formula.iqr_constant = 1.5
+            user_formula.mad_weight, user_formula.iqr_weight, user_formula.sd_weight = [
+                st.number_input(label=f'{method} weight (%)', min_value=0, max_value=100, step=1) / 100 for method in
+                Formula.METHODS]
 
-    else:
-        user_formula.mad_weight, user_formula.iqr_weight, user_formula.sd_weight = [
-            st.number_input(label=f'{method} weight (%)', min_value=0, max_value=100, step=1) / 100 for method in
-            Formula.METHODS]
-
-        user_formula.mad_constant, user_formula.iqr_constant, user_formula.sd_constant = [
-            st.number_input(label=f'{method} constant', min_value=1.0, max_value=5.0, step=0.5) for method in
-            Formula.METHODS]
-
+            user_formula.mad_constant, user_formula.iqr_constant, user_formula.sd_constant = [
+                st.number_input(label=f'{method} constant', min_value=1.0, max_value=5.0, step=0.5) for method in
+                Formula.METHODS]
+        expander = st.expander('See explanation')
+        expander.write('The data points that are outside the threshold indicated by the two red lines would be removed after using the selected formula.')
     return user_formula
 
 
-def distribution_graph(container: st.container, distribution: pd.DataFrame, formula: Formula, kind='KDE'):
+def distribution_graph(distribution: pd.DataFrame, formula: Formula, kind='KDE'):
     sns.set_theme()
     # Set the background color and create a kernel density estimate plot without bars
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig = plt.figure()
 
     # Create a KDE plot with different colors based on the "Type" column
     try:
@@ -186,8 +187,10 @@ def distribution_graph(container: st.container, distribution: pd.DataFrame, form
         ax.axvline(x=threshold[0], color='red', linestyle='--')
         ax.axvline(x=threshold[1], color='red', linestyle='--')
         sns.move_legend(ax, loc='upper right')
+        plt.setp(ax.get_legend().get_texts(), fontsize='8')  # for legend text
+        plt.setp(ax.get_legend().get_title(), fontsize='10')  # for legend title
 
-        with container:
+        with st.container(border=True):
             st.pyplot(fig)
     except TypeError:
         st.error('The chosen column is not numeric. Please choose another column.')
