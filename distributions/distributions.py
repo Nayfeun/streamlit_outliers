@@ -4,25 +4,27 @@ import math
 from distributions.models import Formula
 import streamlit as st
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import seaborn as sns
-import matplotlib.patches as mpatches
 
 
-
-def get_mad(data):
+def get_mad(data: np.ndarray) -> float:
+    """
+    Calculate adjusted Median Absolute Deviation (MAD) of a given distribution.
+    :param data: Input data for which adjusted MAD is calculated.
+    :return: Adjusted MAD of the input data.
+    """
     median = np.nanmedian(data)
     deviations = np.abs(data - median)
     mad = np.nanmedian(deviations)
-    div = 1/np.nanpercentile(data, 75)
+    div = 1 / np.nanpercentile(data, 75)
     return mad * div
 
 
-def calculate_mad(data):
+def calculate_mad(data: np.ndarray) -> float:
     """
     Calculate the Median Absolute Deviation (MAD) of a given distribution.
     :param data: Input data for which MAD is calculated.
-    :return: mad (float): MAD of the input data.
+    :return: MAD of the input data.
     """
     median = np.nanmedian(data)
     deviations = np.abs(data - median)
@@ -30,11 +32,11 @@ def calculate_mad(data):
     return mad * 1.4826
 
 
-def calculate_iqr(data: np.ndarray):
+def calculate_iqr(data: np.ndarray) -> float:
     """
     Calculate the Inter-Quartile-Range (IQR) of a given distribution.
     :param data: Input data for which IQR is calculated.
-    :return: iqr (float):IQR of the input data.
+    :return: IQR of the input data.
     """
     q1 = np.nanpercentile(data, 25)
     q3 = np.nanpercentile(data, 75)
@@ -42,11 +44,11 @@ def calculate_iqr(data: np.ndarray):
     return iqr
 
 
-def calculate_sd(data):
+def calculate_sd(data: np.ndarray) -> float:
     """
     Calculate the Standard Deviation (sd) of a given distribution
     :param data: Input data for which sd is calculated.
-    :return: sd (float): Standard deviation of the input data.
+    :return: sd: Standard deviation of the input data.
     """
     mean_value = np.nanmean(data)
     squared_diff = [(x - mean_value) ** 2 for x in data]
@@ -56,12 +58,12 @@ def calculate_sd(data):
     return sd
 
 
-def get_outlier_amount(initial_distribution_size, rate):
+def get_outlier_amount(initial_distribution_size: int, rate: float) -> float:
     """
     Calculate the amount of outliers needed in order to reach desired outliers' rate in a distribution.
     :param initial_distribution_size: Length of the initial distribution.
     :param rate: Desired outliers' rate in the new distribution.
-    :return: outlier_amount (float): Amount of outliers needed to the reach desired rate.
+    :return: Amount of outliers needed to the reach desired rate.
     """
     if 1 >= rate >= 0:
         outlier_amount = rate * initial_distribution_size / (1 - rate)
@@ -79,7 +81,8 @@ Distribution manipulation
 """
 
 
-def get_threshold(data, weight_mad, weight_iqr, weight_sd, const_mad, const_iqr, const_sd):
+def get_threshold(data: np.ndarray, weight_mad: float, weight_iqr: float, weight_sd: float, const_mad: float,
+                  const_iqr: float, const_sd: float) -> float:
     """
     Calculate outlier detection thresholds using a combination of MAD, IQR, and SD.
     :param data: The input data for which outlier thresholds are calculated.
@@ -93,7 +96,7 @@ def get_threshold(data, weight_mad, weight_iqr, weight_sd, const_mad, const_iqr,
     thresh_up (float): Upper outlier detection threshold.
     """
     mad = calculate_mad(data)
-    #mad = get_mad(data)
+    # mad = get_mad(data)
     iqr = calculate_iqr(data)
     sd = calculate_sd(data)
     thresh_up = weight_mad * (np.nanmedian(data) + const_mad * mad) + weight_iqr * (
@@ -103,7 +106,8 @@ def get_threshold(data, weight_mad, weight_iqr, weight_sd, const_mad, const_iqr,
     return thresh_down, thresh_up
 
 
-def get_data_points(distribution, distribution_size, outliers, outliers_rate):
+def get_data_points(distribution: np.ndarray, distribution_size: int, outliers: np.ndarray,
+                    outliers_rate: float) -> np.ndarray:
     """
     Define distribution array of desired size with desired outliers' rate.
     :param distribution: Input pandas Series containing the distribution.
@@ -119,19 +123,33 @@ def get_data_points(distribution, distribution_size, outliers, outliers_rate):
     return np.concatenate([new_distribution, new_outliers])
 
 
-def get_full_distribution(distribution, n_distribution: int, outliers: str, outliers_rate: float) -> pd.DataFrame:
+def get_full_distribution(distribution: pd.Series, n_distribution: int, outliers: str,
+                          outliers_rate: float) -> pd.DataFrame:
+    """
+    Get Dataframe of distribution with outliers from desired length, outliers kind, and outliers rate.
+    :param distribution: Series with distribution values
+    :param n_distribution: Length of the distribution
+    :param outliers: Type of outliers to be added to the initial distribution
+    :param outliers_rate: Rate of outliers to be added to the initial distribution
+    :return: Dataframe with column 'Distribution' including values of distribution and outliers, and column 'Type' indicating if
+    each datapoint is a valid data point or an outlier.
+    """
     distribution_df = pd.DataFrame()
-    distribution_df["Distribution"] = distribution.sample(frac=n_distribution/len(distribution))
+    distribution_df["Distribution"] = distribution.sample(frac=n_distribution / len(distribution))
     distribution_df["Type"] = "Valid data points"
 
     outliers_df = pd.DataFrame()
     outlier_amount = get_outlier_amount(n_distribution, outliers_rate)
-    outliers_df["Distribution"] = outliers.sample(frac=outlier_amount/len(outliers))
+    outliers_df["Distribution"] = outliers.sample(frac=outlier_amount / len(outliers))
     outliers_df["Type"] = "Outliers"
     return pd.concat([distribution_df, outliers_df])
 
 
 def formula_choice() -> Formula:
+    """
+    Allow user to select a formula from sidebar on a streamlit app.
+    :return: Desired formula.
+    """
     # User formula selection
     with st.sidebar:
         st.subheader("Choose the parameters of the outlier detection formula")
@@ -158,14 +176,27 @@ def formula_choice() -> Formula:
             user_formula.mad_constant, user_formula.iqr_constant, user_formula.sd_constant = [
                 st.number_input(label=f'{method} constant', min_value=1.0, max_value=5.0, step=0.5) for method in
                 Formula.METHODS]
+        # Explanations
         expander = st.expander('See explanation')
-        expander.write('The data points that are outside the threshold indicated by the two red lines would be removed after using the selected formula.')
+        expander.write(
+            "The formulas shown above are the most used univariate outlier detection formulas.\nEach formula "
+            "calculates a threshold, outside of which each data point will be considered as an outlier. The resulting "
+            "threshold is indicated in the figure by two vertical lines.\n\nBy clicking Custom, you can further "
+            "modify the formula parameters. You can combine formulas by changing each formula's weight and constant. "
+            "The resulting threshold will be the weighted mean of each formula's output. ")
     return user_formula
 
 
 def distribution_graph(distribution: pd.DataFrame, formula: Formula, kind='KDE'):
-    sns.set_theme()
+    """
+    Display a KDE plot or a histogram on a streamlit app showing threshold calculated from an outlier detection formula.
+    :param distribution: Dataframe with column 'Distribution' with values and column 'Type' with data type.
+    :param formula: Outlier detection formula
+    :param kind: Kind of dataframe to show (KDE or histogram)
+    :return: None
+    """
     # Set the background color and create a kernel density estimate plot without bars
+    sns.set_theme()
     fig = plt.figure()
 
     # Create a KDE plot with different colors based on the "Type" column
@@ -175,24 +206,35 @@ def distribution_graph(distribution: pd.DataFrame, formula: Formula, kind='KDE')
         else:
             ax = sns.histplot(data=distribution, x='Distribution', hue='Type', fill=True, common_norm=True, legend=True)
 
-        # Set labels and title
+        # Set labels
         plt.xlabel('Value')
         plt.ylabel('Density')
 
-        # Add vertical lines for threshold
         distribution_ndarray = distribution['Distribution'].__array__()
+
+        # Calculate threshold and indicate it on the graph with vertical lines
         threshold = get_threshold(distribution_ndarray, formula.mad_weight, formula.iqr_weight, formula.sd_weight,
                                   formula.mad_constant,
                                   formula.iqr_constant, formula.sd_constant)
-        ax.axvline(x=threshold[0], color='red', linestyle='--')
-        ax.axvline(x=threshold[1], color='red', linestyle='--')
+        ax.axvline(x=threshold[0], color='blue', linestyle='--')
+        ax.axvline(x=threshold[1], color='blue', linestyle='--')
+
+        # Legend
         sns.move_legend(ax, loc='upper right')
         plt.setp(ax.get_legend().get_texts(), fontsize='8')  # for legend text
         plt.setp(ax.get_legend().get_title(), fontsize='10')  # for legend title
 
+        # Show graph
         with st.container(border=True):
             st.pyplot(fig)
     except TypeError:
         st.error('The chosen column is not numeric. Please choose another column.')
 
 
+def get_plot_kind():
+    """
+    Allow user to select kind of plot from sidebar on a streamlit app.
+    :return: Plot kind.
+    """
+    plot_kind = st.sidebar.radio(label='Plot kind', options=['KDE Plot', 'Histogram'])
+    return plot_kind

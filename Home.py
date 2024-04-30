@@ -4,7 +4,7 @@ import streamlit as st
 def main():
     ### Config ###
     st.set_page_config(
-        page_title="Outlier detection",
+        page_title="Outlier Detection",
         layout="centered",
     )
 
