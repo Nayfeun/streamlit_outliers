@@ -5,6 +5,7 @@ from distributions.models import Formula
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import norm
 
 
 def get_mad(data: np.ndarray) -> float:
@@ -13,11 +14,13 @@ def get_mad(data: np.ndarray) -> float:
     :param data: Input data for which adjusted MAD is calculated.
     :return: Adjusted MAD of the input data.
     """
-    median = np.nanmedian(data)
-    deviations = np.abs(data - median)
-    mad = np.nanmedian(deviations)
-    div = 1 / np.nanpercentile(data, 75)
-    return mad * div
+    median_value = np.median(data)
+    absolute_deviations = np.abs(data - median_value)
+    mad_value = np.median(absolute_deviations)
+    scale_factor = 1 / norm.ppf(3/4)  # Quantile function at 75th percentile
+    scaled_mad = mad_value * scale_factor
+
+    return scaled_mad
 
 
 def calculate_mad(data: np.ndarray) -> float:
@@ -81,28 +84,33 @@ Distribution manipulation
 """
 
 
-def get_threshold(data: np.ndarray, weight_mad: float, weight_iqr: float, weight_sd: float, const_mad: float,
-                  const_iqr: float, const_sd: float) -> float:
+def get_threshold(data: np.ndarray, weight_mad: float, weight_iqr: float, weight_sd: float, weight_adjusted_mad: float,
+                  const_mad: float,
+                  const_iqr: float, const_sd: float, const_adjusted_mad: float) -> float:
     """
     Calculate outlier detection thresholds using a combination of MAD, IQR, and SD.
     :param data: The input data for which outlier thresholds are calculated.
     :param weight_mad: Weight for MAD component in the threshold calculation.
     :param weight_iqr: Weight for IQR component in the threshold calculation.
     :param weight_sd: Weight for SD component in the threshold calculation.
+    :param weight_adjusted_mad: Weight for adjusted MAD component in the threshold calculation.
     :param const_mad: Constant multiplier for MAD component in the threshold calculation.
     :param const_iqr: Constant multiplier for IQR component in the threshold calculation.
     :param const_sd: Constant multiplier for SD component in the threshold calculation.
+    :param const_adjusted_mad: Constant multiplier for adjusted MAD component in the threshold calculation.
     :return: thresh_down (float): Lower outlier detection threshold.
     thresh_up (float): Upper outlier detection threshold.
     """
     mad = calculate_mad(data)
-    # mad = get_mad(data)
     iqr = calculate_iqr(data)
     sd = calculate_sd(data)
-    thresh_up = weight_mad * (np.nanmedian(data) + const_mad * mad) + weight_iqr * (
-            np.nanpercentile(data, 75) + const_iqr * iqr) + weight_sd * (np.nanmean(data) + const_sd * sd)
-    thresh_down = weight_mad * (np.nanmedian(data) - const_mad * mad) + weight_iqr * (
-            np.nanpercentile(data, 25) - const_iqr * iqr) + weight_sd * (np.nanmean(data) - const_sd * sd)
+    adjusted_mad = get_mad(data)
+    thresh_up = weight_adjusted_mad * (np.nanmedian(data) + const_adjusted_mad * adjusted_mad) + weight_mad * (
+                np.nanmedian(data) + const_mad * mad) + weight_iqr * (
+                        np.nanpercentile(data, 75) + const_iqr * iqr) + weight_sd * (np.nanmean(data) + const_sd * sd)
+    thresh_down = weight_adjusted_mad * (np.nanmedian(data) - const_adjusted_mad * adjusted_mad) + weight_mad * (
+                np.nanmedian(data) - const_mad * mad) + weight_iqr * (
+                          np.nanpercentile(data, 25) - const_iqr * iqr) + weight_sd * (np.nanmean(data) - const_sd * sd)
     return thresh_down, thresh_up
 
 
@@ -157,23 +165,26 @@ def formula_choice() -> Formula:
         user_formula = Formula()
 
         if not custom:
-            outlier_method = st.radio("Method", ['2.5 MAD', '1.5 IQR', '2.5 SD', '3.0 SD'])
+            outlier_method = st.radio("Method", ['2.5 MAD', '2.5 Adjusted MAD', '1.5 IQR', '2.5 SD', '3.0 SD'])
             if outlier_method.endswith('SD'):
                 user_formula.sd_weight = 1
                 user_formula.sd_constant = float(outlier_method[:3])
-            elif outlier_method.endswith('MAD'):
+            elif outlier_method == '2.5 MAD':
                 user_formula.mad_weight = 1
                 user_formula.mad_constant = float(outlier_method[:3])
+            elif outlier_method.endswith('Adjusted MAD'):
+                user_formula.adjusted_mad_weight = 1
+                user_formula.adjusted_mad_constant = float(outlier_method[:3])
             else:
                 user_formula.iqr_weight = 1
                 user_formula.iqr_constant = 1.5
 
         else:
-            user_formula.mad_weight, user_formula.iqr_weight, user_formula.sd_weight = [
+            user_formula.mad_weight, user_formula.iqr_weight, user_formula.sd_weight, user_formula.adjusted_mad_weight = [
                 st.number_input(label=f'{method} weight (%)', min_value=0, max_value=100, step=1) / 100 for method in
                 Formula.METHODS]
 
-            user_formula.mad_constant, user_formula.iqr_constant, user_formula.sd_constant = [
+            user_formula.mad_constant, user_formula.iqr_constant, user_formula.sd_constant, user_formula.adjusted_mad_constant = [
                 st.number_input(label=f'{method} constant', min_value=1.0, max_value=5.0, step=0.5) for method in
                 Formula.METHODS]
         # Explanations
@@ -213,9 +224,12 @@ def distribution_graph(distribution: pd.DataFrame, formula: Formula, kind='KDE')
         distribution_ndarray = distribution['Distribution'].__array__()
 
         # Calculate threshold and indicate it on the graph with vertical lines
-        threshold = get_threshold(distribution_ndarray, formula.mad_weight, formula.iqr_weight, formula.sd_weight,
-                                  formula.mad_constant,
-                                  formula.iqr_constant, formula.sd_constant)
+        threshold = get_threshold(data=distribution_ndarray, weight_mad=formula.mad_weight,
+                                  weight_iqr=formula.iqr_weight, weight_sd=formula.sd_weight,
+                                  weight_adjusted_mad=formula.adjusted_mad_weight,
+                                  const_mad=formula.mad_constant,
+                                  const_iqr=formula.iqr_constant, const_sd=formula.sd_constant,
+                                  const_adjusted_mad=formula.adjusted_mad_constant)
         ax.axvline(x=threshold[0], color='blue', linestyle='--')
         ax.axvline(x=threshold[1], color='blue', linestyle='--')
 

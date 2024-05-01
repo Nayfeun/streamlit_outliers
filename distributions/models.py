@@ -4,10 +4,12 @@ import pandas as pd
 
 
 class Formula(BaseModel):
-    METHODS: ClassVar[str] = ['MAD', 'IQR', 'SD']
+    METHODS: ClassVar[str] = ['MAD', 'IQR', 'SD', 'Adjusted MAD']
+    adjusted_mad_weight: float = Field(default=0.0)
     mad_weight: float = Field(default=0.0)
     iqr_weight: float = Field(default=0.0)
     sd_weight: float = Field(default=0.0)
+    adjusted_mad_constant: float = Field(default=0.0)
     mad_constant: float = Field(default=0.0)
     iqr_constant: float = Field(default=0.0)
     sd_constant: float = Field(default=0.0)
