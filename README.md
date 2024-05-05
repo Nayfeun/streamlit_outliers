@@ -1,7 +1,7 @@
 ## Context
 Outliers can significantly affect statistical analyses, machine learning models, and decision-making processes. However, choosing the right outlier detection method can be challenging. Researchers often default to a specific method without fully understanding its implications. This app addresses this issue by allowing users to explore various univariate outlier detection techniques and visualize the resulting thresholds.
 
-### How It Works
+## How It Works
 1. **Select a Method**: Choose from a list of commonly used outlier detection methods, such as Z-score, Tukey's method, or Median Absolute Deviation.
 2. **Upload Your Data**: Load your dataset or build a distribution directly.
 3. **Visualize the Threshold**: The app will calculate the threshold for the chosen method and display it on a figure.

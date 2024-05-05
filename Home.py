@@ -19,7 +19,7 @@ def main():
         method without fully understanding its implications. This app addresses this issue by allowing users to explore
         various univariate outlier detection techniques and visualize the resulting thresholds.
 
-        ### How It Works 
+        ## How It Works 
         1. **Select a Method**: Choose from a list of commonly used outlier detection methods, such as Z-score, Tukey's 
         method, or Median Absolute Deviation. 
         2. **Upload Your Data**: Load your dataset or build a distribution directly. 
