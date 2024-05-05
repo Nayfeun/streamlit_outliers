@@ -190,11 +190,34 @@ def formula_choice() -> Formula:
         # Explanations
         expander = st.expander('See explanation')
         expander.write(
-            "The formulas shown above are the most used univariate outlier detection formulas.\nEach formula "
-            "calculates a threshold, outside of which each data point will be considered as an outlier. The resulting "
-            "threshold is indicated in the figure by two vertical lines.\n\nBy clicking Custom, you can further "
-            "modify the formula parameters. You can combine formulas by changing each formula's weight and constant. "
-            "The resulting threshold will be the weighted mean of each formula's output. ")
+            """
+            The formulas shown above are the most used univariate outlier detection formulas.
+            Each formula calculates a threshold, outside of which each data point will be considered as an outlier. The 
+            resulting threshold is indicated in the figure by two vertical lines.
+            
+            By clicking Custom, you can further 
+            modify the formula parameters. You can combine formulas by changing each formula's weight and constant. 
+            The resulting threshold will be the weighted mean of each formula's output.
+            
+            ## Methods 
+            
+            1. **MAD** Median Absolute Deviation
+            
+            *Leys, C., Ley, C., Klein, O., Bernard, P., & Licata, L. (2013). 
+            Detecting outliers: Do not use standard deviation around the mean, use absolute deviation around the 
+            median. Journal of Experimental Social Psychology, 49(4), 764–766. 
+            https://doi.org/10.1016/j.jesp.2013.03.013*
+            
+            2. **IQR** Tukey's Inter Quartile Range
+            
+            *Tukey, JW. (1977) Exploratory data analysis. Addison Wesely*
+            
+            3. **SD** Standard Deviation (Z Score)
+             
+             *Aggarwal, C.C. (2017). An Introduction to Outlier Analysis. In: Outlier Analysis. Springer, Cham. 
+             https://doi.org/10.1007/978-3-319-47578-3_1*
+            """
+        )
     return user_formula
 
 
