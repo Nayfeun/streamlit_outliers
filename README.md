@@ -11,3 +11,5 @@ In the "Simulation" section, you can create custom distributions by adjusting pa
 
 ### Visualization
 The "Visualization" section allows you to upload your own dataset. You can then see how each outlier detection method influences your data distribution.
+
+App link : https://nayfeun-streamlit-outliers-home-lvi9ji.streamlit.app/
